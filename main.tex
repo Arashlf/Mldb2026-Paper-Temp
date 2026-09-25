@@ -96,7 +96,11 @@ s_{-i}, & n_j=0.
 \end{aligned}
 \label{eq:starting-scales}
 \end{equation}
-From an older period of length $T$, sample $B$ consecutive windows of length $\ell=\min(m,\lfloor T/2\rfloor)$ for reference length $m\leq T$, with starts drawn uniformly with replacement. For window $b$, let $u_{jb}$ and $n_{jb}$ denote the log-scale and usable count. Then
+From an older period of length $T$, sample $B$ consecutive windows of length $\ell=\min(m,\lfloor T/2\rfloor)$ for reference length $m\leq T$, with starts drawn uniformly with replacement. Let $\mathcal E_{jb}$ contain the usable times for node $j$ in window $b$, with $n_{jb}=|\mathcal E_{jb}|$. For $n_{jb}>0$, define
+\begin{equation*}
+u_{jb}=\log\!\left[\max\!\left\{\epsilon,Q_{1-\alpha}\bigl(\{d_{jt}:t\in\mathcal E_{jb}\}\bigr)\right\}\right].
+\end{equation*}
+Using these nonempty windows, we estimate
 \begin{equation}
 \begin{aligned}
 \hat v_j&=\frac{\ell}{m}\max\!\left\{10^{-8},\operatorname{Var}_{b}(u_{jb})\right\},\\
@@ -111,7 +115,7 @@ Here $\operatorname{Var}_{b}$ is the sample variance across usable windows. For 
 Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, weighted graph Tikhonov regularization~\cite{shuman2013emerging} gives
 \begin{equation}
 \begin{aligned}
-\hat{\mathbf z}=\arg\min_{\mathbf z}\biggl\{&
+\hat{\mathbf z}\in\arg\min_{\mathbf z}\biggl\{&
 \sum_{j\in\mathcal O}w_j(z_j-\log s_j)^2\\
 &+\lambda\sum_{\{j,k\}\in E}a_{jk}(z_j-z_k)^2\biggr\}.
 \end{aligned}
@@ -125,7 +129,7 @@ Weighted least squares gives more influence to estimates with lower estimated va
 \end{equation}
 Log-space smoothing penalizes relative differences through $\hat z_j-\hat z_k=\log(\tilde s_j/\tilde s_k)$.
 
-At $\lambda=0$, $\tilde s_j=s_j$ for $j\in\mathcal O$ and $\tilde s_j=s_{-i}$ otherwise. For $\lambda>0$, we solve components intersecting $\mathcal O$ separately. Within them, nodes outside $\mathcal O$ receive a harmonic extension, a weighted average of neighboring log-scales. Components disjoint from $\mathcal O$ use $s_{-i}$.
+For $\lambda>0$, each connected component intersecting $\mathcal O$ has a unique solution to~\eqref{eq:smoothing-system}. Within these components, nodes outside $\mathcal O$ receive a harmonic extension, a weighted average of neighboring log-scales. Components disjoint from $\mathcal O$ use $s_{-i}$. At $\lambda=0$, we define $\tilde s_j=s_j$ for $j\in\mathcal O$ and adopt the fallback convention $\tilde s_j=s_{-i}$ otherwise.
 
 The degrees-of-freedom ratio is the normalized trace of the linear smoother,
 \begin{equation}
@@ -133,7 +137,7 @@ The degrees-of-freedom ratio is the normalized trace of the linear smoother,
 \qquad \lambda>0.
 \label{eq:smoothing-ratio}
 \end{equation}
-Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1$. Smaller ratios give stronger sharing. Tuning selects one ratio, and each target case's weights determine $\lambda$. Grid value zero approximates the component-wise shared-scale limit using a large finite $\lambda$.
+Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1$. Smaller ratios give stronger sharing. Tuning selects one ratio, and each target case's weights determine $\lambda$. A special grid entry labeled zero uses a large finite $\lambda$ to approximate the component-wise shared-scale limit.
 
 \subsection{Calibration and Comparisons}
 
