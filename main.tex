@@ -68,18 +68,18 @@ Our work focuses on interval estimation when one target location has little or n
 \section{Graph-Smoothed Prediction Intervals}
 \label{sec:method}
 
-We estimate prediction intervals for a target location with limited data by sharing information with connected locations. Let $V=\{1,\ldots,p\}$ index the traffic sensors or states, and let $y_{jt}$ and $\hat y_{jt}$ denote the observed and predicted values at location $j\in V$ and time $t$. For target location $i\in V$, a radius $r_i$ gives the interval
+Let $V=\{1,\ldots,p\}$ index sensors or states, with observations $y_{jt}$ and forecasts $\hat y_{jt}$ at location $j\in V$ and time $t$. For target location $i\in V$, radius $r_i$ defines
 
 \begin{equation}
 I_{it}=[\hat y_{it}-r_i,\;\hat y_{it}+r_i].
 \label{eq:prediction-interval}
 \end{equation}
 
-For hospital admissions, we replace the lower endpoint by $\max(0,\hat y_{it}-r_i)$ because counts are nonnegative. We compare three ways to set the radius, Global, Local, and Graph Smoothing. Calculations are separate for each forecast horizon and amount of target data, with a coverage target of 90\%.
+For hospital admissions, the lower endpoint is $\max(0,\hat y_{it}-r_i)$. We target 90\% coverage separately for each forecast horizon and amount of target data.
 
 \subsection{Starting Scales}
 
-Let $\mathcal E_j$ contain the usable estimation times for location $j$, with $n_j=|\mathcal E_j|$. We use scaled absolute forecast errors
+For usable estimation times $\mathcal E_j$ and count $n_j=|\mathcal E_j|$, define scaled absolute forecast errors
 \begin{equation}
 d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad
 \tau_j=\begin{cases}
@@ -87,9 +87,9 @@ d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad
 \sigma_{j,\mathrm{train}}, & \text{hospital admissions}.
 \end{cases}
 \end{equation}
-The training-period standard deviation $\sigma_{j,\mathrm{train}}$ makes forecast errors comparable across states and remains available when recent interval-estimation data are absent.
+The training-period standard deviation $\sigma_{j,\mathrm{train}}$ allows cross-state comparisons and remains available at cold start.
 
-For sorted values $x_{(1)}\leq\cdots\leq x_{(n)}$, define $Q_{.9}(x)=x_{(1+\lceil.9(n-1)\rceil)}$. With $\epsilon=10^{-6}$, the pooled fallback and starting scales are
+For sorted values $x_{(1)}\leq\cdots\leq x_{(n)}$, define $Q_{.9}(x)=x_{(1+\lceil.9(n-1)\rceil)}$. A floor $\epsilon=10^{-6}$ permits logarithms. The pooled fallback and starting scales are
 \begin{equation}
 \begin{aligned}
 s_{-i}&=\max\!\left\{\epsilon,Q_{.9}\bigl(\{d_{jt}:j\ne i,\ t\in\mathcal E_j\}\bigr)\right\},\\
@@ -100,9 +100,7 @@ s_{-i}, & n_j=0.
 \end{aligned}
 \label{eq:starting-scales}
 \end{equation}
-The percentile summarizes the magnitude of past forecast errors, while the floor permits logarithms.
-
-For a reference length $m\leq T$, we sample $B$ consecutive windows of length $\ell=\min(m,\lfloor T/2\rfloor)$ from an older period of length $T$, with starts drawn uniformly with replacement. Let $u_{jb}$ be the log-scale and $n_{jb}$ the usable count in sampled window $b$. We calculate
+From an older period of length $T$, sample $B$ consecutive windows of length $\ell=\min(m,\lfloor T/2\rfloor)$ for reference length $m\leq T$, with starts drawn uniformly with replacement. For window $b$, let $u_{jb}$ and $n_{jb}$ denote the log-scale and usable count. Then
 \begin{equation}
 \begin{aligned}
 \hat v_j&=\frac{\ell}{m}\max\!\left\{10^{-8},\operatorname{Var}_{b}(u_{jb})\right\},\\
@@ -110,11 +108,11 @@ c_j&=n_j^{\mathrm{ref}}\hat v_j,\qquad w_j=\frac{n_j}{c_j}.
 \end{aligned}
 \label{eq:precision-weights}
 \end{equation}
-Here $\operatorname{Var}_{b}$ is the sample variance across usable windows. For $m<T$, $n_j^{\mathrm{ref}}=\operatorname{round}[(m/\ell)\operatorname{median}_{b}n_{jb}]$. For $m=T$, it is the total usable count in the older period. The approximation $\operatorname{Var}(\log\hat s_j)\approx c_j/n_j$ motivates inverse-variance weights, with inverse-count scaling motivated by dependent-quantile asymptotics~\cite{wu2005bahadur}. For a limited-data target, we replace $c_i$ by $\operatorname{median}_{j\ne i}c_j$ over finite positive coefficients. We set $w_j=0$ when $n_j=0$ or the variance cannot be estimated.
+Here $\operatorname{Var}_{b}$ is the sample variance across usable windows. For $m<T$, $n_j^{\mathrm{ref}}=\operatorname{round}[(m/\ell)\operatorname{median}_{b}n_{jb}]$. For $m=T$, it counts all usable observations in the older period. Dependent-quantile asymptotics motivate the approximation $\operatorname{Var}(\log\hat s_j)\approx c_j/n_j$ and inverse-variance weights~\cite{wu2005bahadur}. A limited-data target uses $\operatorname{median}_{j\ne i}c_j$ over finite positive coefficients in place of $c_i$. We set $w_j=0$ when $n_j=0$ or variance is unavailable.
 
 \subsection{Graph Smoothing}
 
-Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, we use graph Tikhonov regularization~\cite{shuman2013emerging}, with inverse-variance weights on the fit to the starting log-scales,
+Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, weighted graph Tikhonov regularization~\cite{shuman2013emerging} gives
 \begin{equation}
 \begin{aligned}
 \hat{\mathbf z}=\arg\min_{\mathbf z}\biggl\{&
@@ -123,29 +121,29 @@ Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ 
 \end{aligned}
 \label{eq:graph-smoothing}
 \end{equation}
-The weighted least-squares term retains more precise estimates, while the Laplacian regularization term penalizes differences between connected log-scales. This quadratic choice gives a convex objective and a linear system. With $W=\operatorname{diag}(w_j)$ and graph Laplacian $L=\operatorname{diag}(A\mathbf 1)-A$, its first-order condition gives
+Weighted least squares retains precise estimates, while Laplacian regularization penalizes differences between connected log-scales. The convex quadratic objective yields a linear system, with $W=\operatorname{diag}(w_j)$ and graph Laplacian $L=\operatorname{diag}(A\mathbf 1)-A$,
 \begin{equation}
 (W+\lambda L)\hat{\mathbf z}=W\log\mathbf s,
 \qquad \tilde s_j=e^{\hat z_j}>0.
 \label{eq:smoothing-system}
 \end{equation}
-Log-space smoothing preserves positive scales and penalizes relative differences through $\hat z_j-\hat z_k=\log(\tilde s_j/\tilde s_k)$.
+Log-space smoothing ensures positivity and penalizes relative differences through $\hat z_j-\hat z_k=\log(\tilde s_j/\tilde s_k)$.
 
-At $\lambda=0$, $\tilde s_j=s_j$ for $j\in\mathcal O$ and $\tilde s_j=s_{-i}$ otherwise. For $\lambda>0$, we solve each connected component containing a location in $\mathcal O$ separately. Within such a component, a location without a usable estimate receives a harmonic extension, meaning its log-scale is a weighted average of its neighbors' log-scales. Components containing no location in $\mathcal O$ use $s_{-i}$.
+At $\lambda=0$, $\tilde s_j=s_j$ for $j\in\mathcal O$ and $\tilde s_j=s_{-i}$ otherwise. For $\lambda>0$, we solve components intersecting $\mathcal O$ separately. Within them, nodes outside $\mathcal O$ receive a harmonic extension, a weighted average of neighboring log-scales. Components disjoint from $\mathcal O$ use $s_{-i}$.
 
-We compare smoothing strengths through a degrees-of-freedom ratio, defined by the normalized trace of the linear smoother,
+The degrees-of-freedom ratio is the normalized trace of the linear smoother,
 \begin{equation}
 \rho(\lambda)=\frac{\operatorname{tr}[(W+\lambda L)^{-1}W]}{|\mathcal O|},
 \qquad \lambda>0.
 \label{eq:smoothing-ratio}
 \end{equation}
-The matrices are restricted to components containing locations in $\mathcal O$, and we define $\rho(0)=1$. Smaller ratios mean stronger sharing, whereas $\rho=1$ retains separate scales. Tuning selects a shared ratio, and we recompute $\lambda$ using each target case's weights. The grid value zero denotes the limiting component-wise shared scale, approximated with a large finite $\lambda$.
+Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1$. Smaller ratios give stronger sharing. Tuning selects one ratio, and each target case's weights determine $\lambda$. Grid value zero approximates the component-wise shared-scale limit using a large finite $\lambda$.
 
 \subsection{Calibration and Comparisons}
 
-Let $\mathcal C$ index usable location--time pairs in the separate calibration period, and define $\mathcal C_i=\{(j,t)\in\mathcal C:j\ne i\}$. For $N$ sorted calibration scores, the split-conformal quantile rule~\cite{lei2018distributionfree} uses $Q_{\mathrm{cal}}(x)=x_{(\lceil0.90(N+1)\rceil)}$, with $x_{(N+1)}=+\infty$.
+Let $\mathcal C$ index usable calibration pairs and $\mathcal C_i=\{(j,t)\in\mathcal C:j\ne i\}$. For $N$ sorted scores, the split-conformal rule~\cite{lei2018distributionfree} gives $Q_{\mathrm{cal}}(x)=x_{(\lceil0.90(N+1)\rceil)}$, with $x_{(N+1)}=+\infty$.
 
-The three approaches differ in their scales. Set $b_j=1$ for Global, $b_j=s_j$ for Local, and $b_j=\tilde s_j$ for Graph Smoothing. The ratios $d_{jt}/b_j$ are nonconformity scores, measuring forecast errors relative to the chosen scale. Each approach calculates its own multiplier and radius,
+Set $b_j=1$ for Global, $b_j=s_j$ for Local, and $b_j=\tilde s_j$ for Graph Smoothing. The nonconformity scores $d_{jt}/b_j$ measure scale-adjusted forecast errors. Each method calculates
 
 \begin{equation}
 \begin{aligned}
@@ -156,7 +154,7 @@ r_i&=\tau_i q_i b_i.
 \label{eq:calibrated-radius}
 \end{equation}
 
-Global therefore uses a pooled quantile of scaled absolute forecast errors, while Local and Graph Smoothing additionally normalize by their location-specific scales. The multiplier $q_i$ adjusts interval size toward the 90\% target, and $\tau_i$ returns the radius to the original units. Local isolates the effect of smoothing under the same calibration procedure. Because locations differ and conditions change over time, empirical coverage may differ from 90\%. We measure it on the target location's test data.
+The multiplier $q_i$ adjusts interval size toward 90\% coverage, and $\tau_i$ restores the original units. Local isolates the effect of smoothing under the same calibration procedure. Spatial heterogeneity and temporal change can shift coverage from the target. We therefore report empirical coverage on test data.
 
 \section{Experimental Setup}
 \label{sec:setup}
