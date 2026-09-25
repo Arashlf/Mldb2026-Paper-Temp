@@ -30,7 +30,7 @@ Manhattan, Kansas, USA \\
 }
 
 \maketitle
-\linenumbers
+% \linenumbers
 
 \begin{abstract}
 Prediction intervals describe how far observed values may differ from forecasts. Estimating these intervals is challenging when a location has limited recent data. We propose a variance-weighted graph-smoothing method that shares information between connected locations to estimate location-specific scales. We weight the estimates using their log-scale variance, and a separate calibration step adjusts interval widths toward the chosen coverage target. We evaluate the method using STGCN speed predictions on two datasets, METR-LA and PEMS-BAY, varying the data available for interval estimation at one target sensor at a time. With a short recent history, graph smoothing lowers mean Winkler scores relative to separate sensor-specific scales, while its benefit over pooling data from other sensors varies between networks. With the target sensor's full available data for interval estimation, mean scores are close to those from separate sensor-specific scales. A second application to COVID-19 hospital admissions shows lower mean scaled Winkler scores than pooling data from other states when the target state has limited data for interval estimation. This work demonstrates how graph connections can be used to improve prediction intervals for locations with limited data.
@@ -303,6 +303,10 @@ The evaluation uses one test period per dataset, and earlier traffic results fro
 Point forecasts provide an estimated value, while prediction intervals describe a range of plausible observations. Including these intervals helps express uncertainty in forecasts of traffic speeds and hospital admissions. We presented a variance-weighted graph-smoothing method that uses information from connected locations to estimate intervals when a target location has limited data. Our evaluations show how this information sharing can improve prediction intervals in both applications.
 
 Future research could explore privacy-preserving information sharing for interval estimation and updating prediction intervals as traffic or epidemic conditions change. Another direction is to develop a rule for identifying when graph smoothing is useful, based on the amount of available data and differences between connected locations. These directions could make prediction intervals more useful across applications with changing conditions and uneven data availability.
+
+\section*{Acknowledgment}
+
+This work has been supported by the USDA National Institute of Food and Agriculture, grant number 2022-67015-38059 through the NSF/NIH/USDA/BBSRC/BSF/NSFC Ecology and Evolution of Infectious Diseases Program.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
