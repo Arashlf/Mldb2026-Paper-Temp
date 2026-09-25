@@ -46,7 +46,7 @@ A point forecast gives one estimate of a future observation, while a prediction 
 
 Estimating a prediction interval becomes difficult when a target location has limited recent data for interval estimation. In traffic networks, this can arise after a sensor is activated or when its earlier observations are unavailable. We use cold start to describe having no past data available for interval estimation. Changing conditions can also make recent observations more relevant than older ones~\cite{gibbs2021adaptive}. A scale estimated from a short period can be sensitive to which observations are available. Connected locations can provide additional information~\cite{cini2025relational}, but forecast errors, the differences between observed and predicted values, can have different magnitudes across locations. Sharing information therefore requires a balance between the target location's data and data from its neighbors.
 
-We develop a variance-weighted graph-smoothing method for estimating the scales used to construct prediction intervals. Locations are represented as nodes in a graph, with edges connecting related locations. We smooth log-scales over this graph, giving greater weight to estimates with lower estimated variance. A separate calibration step adjusts the interval widths toward the coverage target, following the scaled split-conformal approach~\cite{lei2018distributionfree}. Our contribution combines this scale estimator with an evaluation of how interval scores change as one target location's available data decreases while other locations retain their available data.
+Our contribution is a post-hoc variance-weighted graph smoother for location-specific scales when a target location has limited recent data. Locations are represented as nodes in a graph, with edges connecting related locations. We smooth log-scales over this graph, giving greater weight to estimates with lower estimated variance. A separate calibration step adjusts the interval widths toward the coverage target using a split-conformal quantile rule~\cite{lei2018distributionfree}. We evaluate how Winkler scores change as the target location's available data decreases while other locations retain their available data.
 
 Our main evaluation uses STGCN-based traffic forecasts~\cite{yu2018stgcn} on METR-LA and PEMS-BAY~\cite{li2018dcrnn}. In Los Angeles, using the target sensor's latest 12, 24, or 48 five-minute slots, Graph Smoothing reduces mean Winkler score~\cite{winkler1972interval} by 3.3--6.6\% compared with directly pooling data from the other sensors. In Bay Area, it lowers the score by 6.7--16.4\% compared with using separate sensor-specific scales, with scores comparable to pooling. Having access to the target sensor's full available data for interval estimation brings the mean scores of Graph Smoothing and separate sensor-specific scales close together. We also apply the method to forecasts of COVID-19 hospital admissions across U.S. states, using data from the COVIDcast repository~\cite{reinhart2021covidcast}. In this second application, graph smoothing lowers mean scaled Winkler scores relative to pooling data from the other states when the target state has limited data for interval estimation.
 
@@ -161,7 +161,7 @@ The multiplier $q_i$ adjusts interval size toward coverage $1-\alpha$. Local pro
 
 We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons, with $\alpha=0.10$ in both applications.
 
-We use a chronological split into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). Within the tuning period, earlier observations estimate scales and calibrate candidate intervals, while later observations compare their scores. We use 200 sampled windows for each reference variance estimate. For each amount of target data and forecast horizon, we select a shared degrees-of-freedom ratio by averaging Winkler scores equally across target locations and choosing the least smoothing among 15 settings within 1\% of the lowest mean score. Each fitted interval radius remains fixed throughout the test period.
+We split data chronologically into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). Each reference variance estimate uses 200 sampled windows. For each target history and forecast horizon, we average tuning Winkler scores equally across locations and select the least smoothing among 15 settings within 1\% of the lowest mean score. Interval radii remain fixed during testing.
 
 \subsection{Traffic Forecasting}
 
@@ -192,9 +192,9 @@ Bay Area & 325 & 52,116 & 0.003 & 2,079 \\
 
 We train an STGCN-based predictor~\cite{yu2018stgcn} separately for each dataset. It uses 12 past speed measurements to predict the next 12 steps. We evaluate forecasts 15, 30, and 60 minutes ahead. Training uses Adam with a learning rate of $10^{-3}$ and a batch size of 32. We select the checkpoint with the lowest validation MAE. We treat nonfinite and nonpositive speeds as missing. Forward-fill imputation replaces missing inputs with the sensor's last available speed~\cite{che2018missing}, with its training-period median as the fallback when no earlier reading is available.
 
-With $\tau_j=1$, each sensor serves as the target using its latest 0, 12, 24, or 48 five-minute slots, or its full available data for interval estimation. Other sensors retain their full available data.
+Tuning uses an approximate 60/20/20 split for older scale estimates, calibration and recent scales, and candidate scoring, with 12-slot boundary offsets. Among observations available before scoring, the middle portion's latest 48 slots estimate recent scales and earlier slots calibrate intervals. With $\tau_j=1$, each target sensor uses 0, 12, 24, or 48 recent five-minute slots, or its full available data. Other sensors retain their full available data.
 
-For test evaluation, full data combines the tuning data with the latest 48 five-minute slots available from the calibration data before test forecasts begin. Limited-data cases use only the assigned number of these recent slots. Earlier calibration data from the other sensors determines the interval multipliers. We then evaluate all methods on forecasts whose target speed and 12 input measurements at the target sensor are observed.
+For testing, full data combines tuning data with the latest 48 calibration slots available before testing begins. Limited-data targets use their assigned recent slots. Earlier calibration data from other sensors determines interval multipliers. Evaluation requires an observed target speed and 12 observed input measurements at the target sensor.
 
 \subsection{COVID-19 Hospital Admissions}
 \label{sec:second-application-setup}
@@ -216,7 +216,7 @@ where $\sigma_{j,\mathrm{train}}$ is the state's training-period standard deviat
 \mathcal T\cup\mathcal R_{14}, & \text{otherwise}.
 \end{cases}
 \end{equation}
-The earlier 78 calibration dates from states $j\ne i$ determine $q_i$. Testing covers 92 daily forecasts per state from January 26 to April 26, 2024.
+Tuning uses the first 32 dates for older scale estimates and the final 21 for scoring. Among intervening observations available before scoring, the latest 14 dates estimate recent scales and earlier dates calibrate intervals. For testing, the earlier 78 calibration dates from states $j\ne i$ determine $q_i$. Testing covers 92 daily forecasts per state from January 26 to April 26, 2024.
 
 \subsection{Evaluation Metrics}
 
@@ -300,11 +300,11 @@ Graph Smoothing also lowers mean scaled Winkler scores in the hospital-admission
 \label{fig:hospital-results}
 \end{figure}
 
-With limited target data, Graph Smoothing gives mean interval widths of 60.5--64.0 admissions, compared with 74.5 for Global. Its mean empirical coverage is 96.7--98.7\%, above the 90\% target. The intervals are narrower than Global's while remaining conservative on average. This application demonstrates the use of the same scale-sharing method around hospital-admission forecasts.
+With limited target data, Graph Smoothing gives mean interval widths of 60.5--64.0 admissions, compared with 74.5 for Global. Although narrower than Global's, these intervals have mean empirical coverage of 96.7--98.7\%, above the nominal 90\% target. This application demonstrates the use of the same scale-sharing method around hospital-admission forecasts.
 
 \subsection{Discussion and Limitations}
 
-The benefit of graph smoothing depends on the application and the data available at the target location. Its mean score reductions relative to Global are clearer in Los Angeles and hospital admissions, while its mean scores in Bay Area remain close to Global. With full available data, Graph Smoothing and Local have equal or nearly equal mean scores in all three datasets. The clearest gains from sharing scale information occur when the target location has limited data.
+Graph Smoothing's gains over Global are clearer in Los Angeles and hospital admissions, while Bay Area scores remain close to Global. Gains are clearest with limited target data. With full data, Graph Smoothing and Local have equal or nearly equal mean scores across all three datasets.
 
 The evaluation uses one test period per dataset, and earlier traffic results from these periods informed the experimental design. Evaluation on additional, unused periods would help assess how well the findings carry over. Our comparisons evaluate the complete method. Comparisons with count-only weights and graph-free shrinkage would help identify how much the variance weights and graph connections each contribute.
 
