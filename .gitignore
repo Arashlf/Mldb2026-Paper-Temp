@@ -1,0 +1,6 @@
+# Keep the compiled manuscript PDF.
+/build/*
+!/build/main.pdf
+
+# Share the VS Code build settings, not personal editor files.
+/.vscode/*
