@@ -68,33 +68,29 @@ Our work focuses on interval estimation when one target location has little or n
 \section{Graph-Smoothed Prediction Intervals}
 \label{sec:method}
 
-Let $V=\{1,\ldots,p\}$ index sensors or states, with observations $y_{jt}$ and forecasts $\hat y_{jt}$ at location $j\in V$ and time $t$. For target location $i\in V$, radius $r_i$ defines
+Let $V=\{1,\ldots,p\}$ be the nodes of a graph, with observations $y_{jt}$ and forecasts $\hat y_{jt}$ at node $j\in V$ and time $t$. For target node $i\in V$, radius $r_i$ defines
 
 \begin{equation}
 I_{it}=[\hat y_{it}-r_i,\;\hat y_{it}+r_i].
 \label{eq:prediction-interval}
 \end{equation}
 
-For hospital admissions, the lower endpoint is $\max(0,\hat y_{it}-r_i)$. We target 90\% coverage separately for each forecast horizon and amount of target data.
+For a chosen miscoverage level $\alpha\in(0,1)$, we target coverage $1-\alpha$ separately for each forecast horizon and amount of target-node data.
 
 \subsection{Starting Scales}
 
-For usable estimation times $\mathcal E_j$ and count $n_j=|\mathcal E_j|$, define scaled absolute forecast errors
+For usable estimation times $\mathcal E_j$ at node $j$ and count $n_j=|\mathcal E_j|$, define scaled absolute forecast errors
 \begin{equation}
-d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad
-\tau_j=\begin{cases}
-1, & \text{traffic},\\
-\sigma_{j,\mathrm{train}}, & \text{hospital admissions}.
-\end{cases}
+d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad \tau_j>0.
 \end{equation}
-The training-period standard deviation $\sigma_{j,\mathrm{train}}$ allows cross-state comparisons and remains available at cold start.
+The normalization factor $\tau_j$ is fixed before interval estimation and remains available at cold start. Setting $\tau_j=1$ retains the original units.
 
-For sorted values $x_{(1)}\leq\cdots\leq x_{(n)}$, define $Q_{.9}(x)=x_{(1+\lceil.9(n-1)\rceil)}$. A floor $\epsilon=10^{-6}$ permits logarithms. The pooled fallback and starting scales are
+For sorted values $x_{(1)}\leq\cdots\leq x_{(n)}$, define $Q_{1-\alpha}(x)=x_{(1+\lceil(1-\alpha)(n-1)\rceil)}$. A floor $\epsilon=10^{-6}$ permits logarithms. The pooled fallback and starting scales are
 \begin{equation}
 \begin{aligned}
-s_{-i}&=\max\!\left\{\epsilon,Q_{.9}\bigl(\{d_{jt}:j\ne i,\ t\in\mathcal E_j\}\bigr)\right\},\\
+s_{-i}&=\max\!\left\{\epsilon,Q_{1-\alpha}\bigl(\{d_{jt}:j\ne i,\ t\in\mathcal E_j\}\bigr)\right\},\\
 s_j&=\begin{cases}
-\max\{\epsilon,Q_{.9}(\{d_{jt}:t\in\mathcal E_j\})\}, & n_j>0,\\
+\max\{\epsilon,Q_{1-\alpha}(\{d_{jt}:t\in\mathcal E_j\})\}, & n_j>0,\\
 s_{-i}, & n_j=0.
 \end{cases}
 \end{aligned}
@@ -141,7 +137,7 @@ Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1
 
 \subsection{Calibration and Comparisons}
 
-Let $\mathcal C$ index usable calibration pairs and $\mathcal C_i=\{(j,t)\in\mathcal C:j\ne i\}$. For $N$ sorted scores, the split-conformal rule~\cite{lei2018distributionfree} gives $Q_{\mathrm{cal}}(x)=x_{(\lceil0.90(N+1)\rceil)}$, with $x_{(N+1)}=+\infty$.
+Let $\mathcal C$ index usable node--time calibration pairs and $\mathcal C_i=\{(j,t)\in\mathcal C:j\ne i\}$. For $N$ sorted scores, the split-conformal rule~\cite{lei2018distributionfree} gives $Q_{\mathrm{cal}}(x)=x_{(\lceil(1-\alpha)(N+1)\rceil)}$, with $x_{(N+1)}=+\infty$.
 
 Set $b_j=1$ for Global, $b_j=s_j$ for Local, and $b_j=\tilde s_j$ for Graph Smoothing. The nonconformity scores $d_{jt}/b_j$ measure scale-adjusted forecast errors. Each method calculates
 
@@ -154,12 +150,12 @@ r_i&=\tau_i q_i b_i.
 \label{eq:calibrated-radius}
 \end{equation}
 
-The multiplier $q_i$ adjusts interval size toward 90\% coverage, and $\tau_i$ restores the original units. Local isolates the effect of smoothing under the same calibration procedure. Spatial heterogeneity and temporal change can shift coverage from the target. We therefore report empirical coverage on test data.
+The multiplier $q_i$ adjusts interval size toward coverage $1-\alpha$, and $\tau_i$ restores the original units. Local isolates the effect of smoothing under the same calibration procedure. Heterogeneity across nodes and temporal dependence can shift coverage from the target. We therefore report empirical coverage on test data.
 
 \section{Experimental Setup}
 \label{sec:setup}
 
-We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons.
+We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons, with $\alpha=0.10$ in both applications.
 
 We use a chronological split into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%), in that order. This reserves separate data for calibration and evaluation, following split-conformal practice~\cite{lei2018distributionfree}. Within the tuning period, earlier observations estimate scales and calibrate candidate intervals, while later observations compare their scores. We use 200 sampled windows for each reference variance estimate. For each amount of target data and forecast horizon, we average Winkler scores equally across target locations and choose the least smoothing among 15 settings within 1\% of the lowest mean score. This selects one degrees-of-freedom ratio shared by all target locations for that case. Hospital scores use the normalization described below. Each fitted interval radius remains fixed throughout the test period.
 
@@ -192,7 +188,7 @@ Bay Area & 325 & 52,116 & 0.003 & 2,079 \\
 
 We train an STGCN-based predictor~\cite{yu2018stgcn} separately for each dataset. It uses 12 past speed measurements to predict the next 12 steps. We evaluate forecasts 15, 30, and 60 minutes ahead. Training uses Adam with a learning rate of $10^{-3}$ and a batch size of 32. We select the checkpoint with the lowest validation MAE. We treat nonfinite and nonpositive speeds as missing. Forward-fill imputation replaces missing inputs with the sensor's last available speed~\cite{che2018missing}, with its training-period median as the fallback when no earlier reading is available.
 
-We estimate uncertainty for one target sensor at a time using predicted and observed speeds from its latest 0, 12, 24, or 48 five-minute slots, or its full available data for interval estimation. Other sensors retain their full available data. We repeat each case for every sensor.
+We use $\tau_j=1$ for all sensors and estimate uncertainty for one target sensor at a time using predicted and observed speeds from its latest 0, 12, 24, or 48 five-minute slots, or its full available data for interval estimation. Other sensors retain their full available data. We repeat each case for every sensor.
 
 For test evaluation, full data combines the tuning data with the latest 48 five-minute slots available from the calibration data before test forecasts begin. Limited-data cases use only the assigned number of these recent slots. Earlier calibration data from the other sensors determines the interval multipliers. We then evaluate all methods on forecasts whose target speed and 12 input measurements at the target sensor are observed.
 
@@ -201,7 +197,7 @@ For test evaluation, full data combines the tuning data with the latest 48 five-
 
 We use daily counts of confirmed COVID-19 hospital admissions reported by HHS through COVIDcast~\cite{reinhart2021covidcast}. The data and geographic graph are distributed with EpiPatch at \url{https://github.com/Alistair-Turcan/EpiPatch}. The selected period covers 978 days from August 23, 2021, to April 26, 2024. We retain the largest connected component, with 49 locations covering the 48 contiguous states and Washington, D.C., and 109 undirected geographic connections of weight one. The selected data contain no missing values, and zero admissions are valid observations.
 
-We evaluate seven-day-ahead forecasts of hospital admissions. The training period provides each state's normalization factor. A forecast error becomes available for interval estimation once its corresponding admission count is observed. The experiment uses a retrospective data extract with observations treated as available on their recorded dates.
+Each node represents a state. We evaluate seven-day-ahead forecasts of hospital admissions, using $\tau_j=\sigma_{j,\mathrm{train}}$, the state's training-period standard deviation, for normalization. This factor remains available at cold start. For nonnegative admission counts, the lower interval endpoint is $\max(0,\hat y_{it}-r_i)$. A forecast error becomes available for interval estimation once its corresponding admission count is observed. The experiment uses a retrospective data extract with observations treated as available on their recorded dates.
 
 Each state takes a turn as the target with 0, 7, or 14 recent days of data for interval estimation, or its full available data. Other states retain their full available data. For test evaluation, full data contains 92 days from the tuning period and the latest 14 available days from the calibration period. The earlier 78 calibration days from the other states determine the interval multipliers. We evaluate 92 daily forecasts per state from January 26 to April 26, 2024.
 
