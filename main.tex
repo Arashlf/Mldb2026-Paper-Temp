@@ -42,9 +42,9 @@ Machine learning, conformal prediction, graph smoothing, spatio-temporal data, u
 
 \section{Introduction}
 
-A point forecast gives one estimate of a future observation, while a prediction interval describes how far the observation may differ from that estimate. In traffic forecasting, graph-based models use sensor observations to predict speeds by capturing relationships between locations and changes over time~\cite{yu2018stgcn,li2018dcrnn}. These predictions are uncertain because traffic conditions vary and models learn from limited data~\cite{latifi2025survey,mallick2024uncertainty}.
+A point forecast gives one estimate of a future observation, while a prediction interval describes how far the observation may differ from that estimate. Traffic observations form graph-structured time series, with a speed sequence at each sensor. Graph-based models predict speeds by capturing spatio-temporal dependencies across sensors and time~\cite{yu2018stgcn,li2018dcrnn}. These predictions are uncertain because traffic conditions vary and models learn from limited data~\cite{latifi2025survey,mallick2024uncertainty}.
 
-Estimating a prediction interval becomes difficult when a target location has limited recent data for interval estimation. In traffic networks, this can arise after a sensor is activated or when its earlier observations are unavailable. We use cold start to describe having no past data available for interval estimation. Changing conditions can also make recent observations more relevant than older ones~\cite{gibbs2021adaptive}. A scale estimated from a short period can be sensitive to which observations are available. Connected locations can provide additional information~\cite{cini2025relational}, but the size of the differences between predictions and observations can vary across locations. Sharing information therefore requires a balance between the target location's data and data from its neighbors.
+Estimating a prediction interval becomes difficult when a target location has limited recent data for interval estimation. In traffic networks, this can arise after a sensor is activated or when its earlier observations are unavailable. We use cold start to describe having no past data available for interval estimation. Changing conditions can also make recent observations more relevant than older ones~\cite{gibbs2021adaptive}. A scale estimated from a short period can be sensitive to which observations are available. Connected locations can provide additional information~\cite{cini2025relational}, but forecast errors, the differences between observed and predicted values, can have different magnitudes across locations. Sharing information therefore requires a balance between the target location's data and data from its neighbors.
 
 We develop a variance-weighted method for estimating the scales used to construct prediction intervals. Locations are represented as nodes in a graph, with edges connecting related locations. Graph smoothing adjusts each location's scale toward those of connected locations, giving greater weight to estimates with lower log-scale variance. A separate calibration step adjusts the interval widths toward the coverage target, following the scaled split-conformal approach~\cite{lei2018distributionfree}. We focus on cases where one target location has limited data for interval estimation while the other locations retain their available data.
 
@@ -55,15 +55,15 @@ The remainder of this paper is organized as follows. Section~\ref{sec:related-wo
 \section{Related Work}
 \label{sec:related-work}
 
-We review related approaches to prediction intervals, with a focus on time series and graph data. Split conformal prediction fits a model on one part of the data and uses another part to set interval widths. Keeping calibration separate from model fitting supports its marginal coverage guarantee under exchangeability~\cite{lei2018distributionfree}. Lei et al.~\cite{lei2018distributionfree} also study a locally weighted extension that scales the absolute differences between predicted and observed values before calibration, allowing interval widths to vary across inputs. Romano et al.~\cite{romano2019cqr} develop CQR, which calibrates lower and upper quantile predictions. Both approaches adapt interval widths to differences across inputs.
+We review related approaches to prediction intervals for time series and graph data. Split conformal prediction fits a model on one part of the data and uses another part to set interval widths. Keeping calibration separate from model fitting supports its marginal coverage guarantee under exchangeability~\cite{lei2018distributionfree}. Lei et al.~\cite{lei2018distributionfree} also study a locally weighted extension that scales absolute prediction errors before calibration, allowing interval widths to vary across inputs. Romano et al.~\cite{romano2019cqr} develop CQR, which calibrates lower and upper quantile predictions. Both approaches adapt interval widths to differences across inputs.
 
-Time-series methods address dependence and distribution shift through sequential updates. Gibbs and Cand\`es~\cite{gibbs2021adaptive} introduce ACI, which adjusts the calibration level according to whether recent intervals contain the observations. Xu and Xie~\cite{xu2023timeseries} develop EnbPI, which combines bootstrap ensemble predictions with a changing collection of differences between predicted and observed values. Their analysis bounds coverage gaps under assumptions on temporal dependence and estimation accuracy. These methods use new observations to update intervals over time.
+Time-series methods address dependence and distribution shift through sequential updates. Gibbs and Cand\`es~\cite{gibbs2021adaptive} introduce ACI, which adjusts the calibration level according to whether recent intervals contain the observations. Xu and Xie~\cite{xu2023timeseries} develop EnbPI, which combines bootstrap ensemble predictions with an updated collection of prediction errors. Their analysis bounds coverage gaps under assumptions on temporal dependence and estimation accuracy. These methods use new observations to update intervals over time.
 
-Graph-based methods use relationships between nodes when constructing prediction sets. Lunde et al.~\cite{lunde2025network} establish conformal validity for regression with network-derived features under joint exchangeability assumptions. Baghershahi et al.~\cite{baghershahi2026graphlcp} propose GraphLCP, which uses graph connections and node features to weight calibration samples through a Personalized PageRank kernel. For correlated time series, Cini et al.~\cite{cini2025relational} introduce CoRel, which learns relationships between time series and uses an STGNN to estimate quantiles of the differences between predicted and observed values. Guo et al.~\cite{guo2026scale} propose SCALE, which combines graph-wavelet decomposition with a learned quantile model and evaluates it on traffic datasets. Limmer~\cite{limmer2026filtered} studies filtered conformal ellipsoids, using predictive covariances to construct joint prediction regions for multiple sensors.
+Graph-based methods use relationships between nodes when constructing prediction sets. Lunde et al.~\cite{lunde2025network} establish conformal validity for regression with network-derived features under joint exchangeability assumptions. Baghershahi et al.~\cite{baghershahi2026graphlcp} propose GraphLCP, which uses graph connections and node features to weight calibration samples through a Personalized PageRank kernel. For correlated time series, Cini et al.~\cite{cini2025relational} introduce CoRel, which learns relationships between time series and uses an STGNN to estimate prediction-error quantiles. Guo et al.~\cite{guo2026scale} propose SCALE, which combines graph-wavelet decomposition with a learned quantile model and evaluates it on traffic datasets. Limmer~\cite{limmer2026filtered} studies filtered conformal ellipsoids, using predictive covariances to construct joint prediction regions for multiple sensors.
 
 Conformal prediction has also been used to estimate uncertainty in epidemic forecasts. Wohlfender et al.~\cite{wohlfender2026hospital} apply ACI to construct prediction intervals for machine learning forecasts of COVID-19 hospital admissions. For evaluating epidemic forecasts, Bracher et al.~\cite{bracher2021evaluating} describe interval scores that account for both interval width and observations outside the intervals. These works address interval construction and evaluation in the hospital-admissions application considered here.
 
-Our work focuses on interval estimation when one target location has little or no recent data while other locations retain their available data. CoRel~\cite{cini2025relational} and SCALE~\cite{guo2026scale} learn models for uncertainty estimation, while GraphLCP~\cite{baghershahi2026graphlcp} weights calibration samples using graph structure. Our method instead smooths location-specific log-scales over a supplied graph, with weights based on their estimated variance. It operates on existing forecasts. We evaluate how this scale sharing affects prediction intervals as the target location's available data changes.
+Our work focuses on interval estimation when one target location has little or no recent data while other locations retain their available data. CoRel~\cite{cini2025relational} and SCALE~\cite{guo2026scale} learn models for uncertainty estimation, while GraphLCP~\cite{baghershahi2026graphlcp} weights calibration samples using graph structure. Our method instead smooths location-specific log-scales over a supplied graph, with weights based on their estimated variance. This is post-hoc interval estimation, applied to existing forecasts. We evaluate how this scale sharing affects prediction intervals as the target location's available data changes.
 
 \section{Graph-Smoothed Prediction Intervals}
 \label{sec:method}
@@ -79,7 +79,7 @@ For hospital admissions, we replace the lower endpoint by $\max(0,\hat y_{it}-r_
 
 \subsection{Starting Scales}
 
-Let $\mathcal E_j$ contain the usable estimation times for location $j$, with $n_j=|\mathcal E_j|$. We use normalized absolute forecast differences
+Let $\mathcal E_j$ contain the usable estimation times for location $j$, with $n_j=|\mathcal E_j|$. We use scaled absolute forecast errors
 \begin{equation}
 d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad
 \tau_j=\begin{cases}
@@ -87,7 +87,7 @@ d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad
 \sigma_{j,\mathrm{train}}, & \text{hospital admissions}.
 \end{cases}
 \end{equation}
-The training-period standard deviation $\sigma_{j,\mathrm{train}}$ makes admission differences comparable across states and remains available when recent interval-estimation data are absent.
+The training-period standard deviation $\sigma_{j,\mathrm{train}}$ makes forecast errors comparable across states and remains available when recent interval-estimation data are absent.
 
 For sorted values $x_{(1)}\leq\cdots\leq x_{(n)}$, define $Q_{.9}(x)=x_{(1+\lceil.9(n-1)\rceil)}$. With $\epsilon=10^{-6}$, the pooled fallback and starting scales are
 \begin{equation}
@@ -100,7 +100,7 @@ s_{-i}, & n_j=0.
 \end{aligned}
 \label{eq:starting-scales}
 \end{equation}
-The percentile summarizes the size of past forecast differences, while the floor permits logarithms.
+The percentile summarizes the magnitude of past forecast errors, while the floor permits logarithms.
 
 For a reference length $m\leq T$, we sample $B$ consecutive windows of length $\ell=\min(m,\lfloor T/2\rfloor)$ from an older period of length $T$, with starts drawn uniformly with replacement. Let $u_{jb}$ be the log-scale and $n_{jb}$ the usable count in sampled window $b$. We calculate
 \begin{equation}
@@ -114,7 +114,7 @@ Here $\operatorname{Var}_{b}$ is the sample variance across usable windows. For 
 
 \subsection{Graph Smoothing}
 
-Let $A=(a_{jk})$ be the symmetric connection matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, we use graph Tikhonov regularization~\cite{shuman2013emerging}, with inverse-variance weights on the fit to the starting log-scales,
+Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, we use graph Tikhonov regularization~\cite{shuman2013emerging}, with inverse-variance weights on the fit to the starting log-scales,
 \begin{equation}
 \begin{aligned}
 \hat{\mathbf z}=\arg\min_{\mathbf z}\biggl\{&
@@ -123,7 +123,7 @@ Let $A=(a_{jk})$ be the symmetric connection matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0
 \end{aligned}
 \label{eq:graph-smoothing}
 \end{equation}
-The weighted squared term retains more precise estimates, while the edge penalty expresses the assumption that connected locations have similar log-scales. This quadratic choice gives a convex objective and a linear system. With $W=\operatorname{diag}(w_j)$ and $L=\operatorname{diag}(A\mathbf 1)-A$, its first-order condition gives
+The weighted least-squares term retains more precise estimates, while the Laplacian regularization term penalizes differences between connected log-scales. This quadratic choice gives a convex objective and a linear system. With $W=\operatorname{diag}(w_j)$ and graph Laplacian $L=\operatorname{diag}(A\mathbf 1)-A$, its first-order condition gives
 \begin{equation}
 (W+\lambda L)\hat{\mathbf z}=W\log\mathbf s,
 \qquad \tilde s_j=e^{\hat z_j}>0.
@@ -131,7 +131,7 @@ The weighted squared term retains more precise estimates, while the edge penalty
 \end{equation}
 Log-space smoothing preserves positive scales and penalizes relative differences through $\hat z_j-\hat z_k=\log(\tilde s_j/\tilde s_k)$.
 
-At $\lambda=0$, $\tilde s_j=s_j$ for $j\in\mathcal O$ and $\tilde s_j=s_{-i}$ otherwise. For $\lambda>0$, we solve each connected component containing a location in $\mathcal O$ separately. A location without a usable estimate then borrows information through its connections. Components containing no such location use $s_{-i}$.
+At $\lambda=0$, $\tilde s_j=s_j$ for $j\in\mathcal O$ and $\tilde s_j=s_{-i}$ otherwise. For $\lambda>0$, we solve each connected component containing a location in $\mathcal O$ separately. Within such a component, a location without a usable estimate receives a harmonic extension, meaning its log-scale is a weighted average of its neighbors' log-scales. Components containing no location in $\mathcal O$ use $s_{-i}$.
 
 We compare smoothing strengths through a degrees-of-freedom ratio, defined by the normalized trace of the linear smoother,
 \begin{equation}
@@ -145,7 +145,7 @@ The matrices are restricted to components containing locations in $\mathcal O$, 
 
 Let $\mathcal C$ index usable location--time pairs in the separate calibration period, and define $\mathcal C_i=\{(j,t)\in\mathcal C:j\ne i\}$. For $N$ sorted calibration scores, the split-conformal quantile rule~\cite{lei2018distributionfree} uses $Q_{\mathrm{cal}}(x)=x_{(\lceil0.90(N+1)\rceil)}$, with $x_{(N+1)}=+\infty$.
 
-The three approaches differ in their scales. Set $b_j=1$ for Global, $b_j=s_j$ for Local, and $b_j=\tilde s_j$ for Graph Smoothing. Each approach calculates its own multiplier and radius,
+The three approaches differ in their scales. Set $b_j=1$ for Global, $b_j=s_j$ for Local, and $b_j=\tilde s_j$ for Graph Smoothing. The ratios $d_{jt}/b_j$ are nonconformity scores, measuring forecast errors relative to the chosen scale. Each approach calculates its own multiplier and radius,
 
 \begin{equation}
 \begin{aligned}
@@ -156,14 +156,14 @@ r_i&=\tau_i q_i b_i.
 \label{eq:calibrated-radius}
 \end{equation}
 
-Global therefore uses a pooled quantile directly, while Local and Graph Smoothing calibrate scale-normalized differences. The multiplier $q_i$ adjusts interval size toward the 90\% target, and $\tau_i$ returns the radius to the original units. Local isolates the effect of smoothing under the same calibration procedure. Because locations differ and conditions change over time, achieved coverage may differ from 90\%. We measure it on the target location's test data.
+Global therefore uses a pooled quantile of scaled absolute forecast errors, while Local and Graph Smoothing additionally normalize by their location-specific scales. The multiplier $q_i$ adjusts interval size toward the 90\% target, and $\tau_i$ returns the radius to the original units. Local isolates the effect of smoothing under the same calibration procedure. Because locations differ and conditions change over time, empirical coverage may differ from 90\%. We measure it on the target location's test data.
 
 \section{Experimental Setup}
 \label{sec:setup}
 
 We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons.
 
-We split each dataset in time order into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). This reserves separate data for calibration and evaluation, following split-conformal practice~\cite{lei2018distributionfree}. Within the tuning period, earlier observations estimate scales and calibrate candidate intervals, while later observations compare their scores. We use 200 sampled windows for each reference variance estimate. For each amount of target data and forecast horizon, we average Winkler scores equally across target locations and choose the least smoothing among 15 settings within 1\% of the lowest mean score. This selects one degrees-of-freedom ratio shared by all target locations for that case. Hospital scores use the normalization described below. Each fitted interval radius remains fixed throughout the test period.
+We use a chronological split into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%), in that order. This reserves separate data for calibration and evaluation, following split-conformal practice~\cite{lei2018distributionfree}. Within the tuning period, earlier observations estimate scales and calibrate candidate intervals, while later observations compare their scores. We use 200 sampled windows for each reference variance estimate. For each amount of target data and forecast horizon, we average Winkler scores equally across target locations and choose the least smoothing among 15 settings within 1\% of the lowest mean score. This selects one degrees-of-freedom ratio shared by all target locations for that case. Hospital scores use the normalization described below. Each fitted interval radius remains fixed throughout the test period.
 
 \subsection{Traffic Forecasting}
 
@@ -192,7 +192,7 @@ Bay Area & 325 & 52,116 & 0.003 & 2,079 \\
 \label{fig:sensor-network}
 \end{figure}
 
-We train an STGCN-based predictor~\cite{yu2018stgcn} separately for each dataset. It uses 12 past speed measurements to predict the next 12 steps. We evaluate forecasts 15, 30, and 60 minutes ahead. Training uses Adam with a learning rate of $10^{-3}$ and a batch size of 32. We select the checkpoint with the lowest validation MAE. We treat nonfinite and nonpositive speeds as missing. Missing inputs are filled with the sensor's last available speed~\cite{che2018missing}, or its median training speed if no earlier reading is available.
+We train an STGCN-based predictor~\cite{yu2018stgcn} separately for each dataset. It uses 12 past speed measurements to predict the next 12 steps. We evaluate forecasts 15, 30, and 60 minutes ahead. Training uses Adam with a learning rate of $10^{-3}$ and a batch size of 32. We select the checkpoint with the lowest validation MAE. We treat nonfinite and nonpositive speeds as missing. Forward-fill imputation replaces missing inputs with the sensor's last available speed~\cite{che2018missing}, with its training-period median as the fallback when no earlier reading is available.
 
 We estimate uncertainty for one target sensor at a time using predicted and observed speeds from its latest 0, 12, 24, or 48 five-minute slots, or its full available data for interval estimation. Other sensors retain their full available data. We repeat each case for every sensor.
 
@@ -203,13 +203,13 @@ For test evaluation, full data combines the tuning data with the latest 48 five-
 
 We use daily counts of confirmed COVID-19 hospital admissions reported by HHS through COVIDcast~\cite{reinhart2021covidcast}. The data and geographic graph are distributed with EpiPatch at \url{https://github.com/Alistair-Turcan/EpiPatch}. The selected period covers 978 days from August 23, 2021, to April 26, 2024. We retain the largest connected component, with 49 locations covering the 48 contiguous states and Washington, D.C., and 109 undirected geographic connections of weight one. The selected data contain no missing values, and zero admissions are valid observations.
 
-We evaluate seven-day-ahead forecasts of hospital admissions. The training period provides each state's normalization factor. A forecast difference becomes available for interval estimation once its corresponding admission count is observed. The experiment uses a retrospective data extract with observations treated as available on their recorded dates.
+We evaluate seven-day-ahead forecasts of hospital admissions. The training period provides each state's normalization factor. A forecast error becomes available for interval estimation once its corresponding admission count is observed. The experiment uses a retrospective data extract with observations treated as available on their recorded dates.
 
 Each state takes a turn as the target with 0, 7, or 14 recent days of data for interval estimation, or its full available data. Other states retain their full available data. For test evaluation, full data contains 92 days from the tuning period and the latest 14 available days from the calibration period. The earlier 78 calibration days from the other states determine the interval multipliers. We evaluate 92 daily forecasts per state from January 26 to April 26, 2024.
 
 \subsection{Evaluation Metrics}
 
-We compare the three methods at a 90\% coverage target using Winkler score, coverage, and interval width. Winkler score penalizes wide intervals and observations outside them, with lower scores indicating better results~\cite{winkler1972interval,bracher2021evaluating}. Coverage is the fraction of observations inside the intervals. For traffic, both Winkler score and interval width are reported in mph. For hospital admissions, we divide each state's Winkler score by its training-period standard deviation $\tau_j$ to give states with different admission levels comparable influence, while interval width is reported in admissions. Within each application, we average each metric within each location and then equally across locations, separately for each forecast horizon and amount of available data.
+We compare the three methods at a 90\% coverage target using Winkler score, empirical coverage, and interval width. Winkler score penalizes wide intervals and observations outside them, with lower scores indicating better results~\cite{winkler1972interval,bracher2021evaluating}. Empirical coverage is the fraction of test observations inside the intervals. For traffic, both Winkler score and interval width are reported in mph. For hospital admissions, we divide each state's Winkler score by its training-period standard deviation $\tau_j$ to give states with different admission levels comparable influence, while interval width is reported in admissions. Within each application, we average each metric within each location and then equally across locations, separately for each forecast horizon and amount of available data.
 
 Code and instructions for reproducing the experiments are available at \url{https://github.com/Arashlf/graph-smoothed-intervals-mldb}.
 
@@ -260,13 +260,13 @@ Fig.~\ref{fig:sensor-improvements} shows how the score differences vary across L
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figure/traffic_sensor_improvement_vs_global.pdf}
-\caption{Sensor-level percentage reductions in Winkler score relative to Global in Los Angeles. Positive values favor Graph Smoothing. Boxes show the middle 50\% of sensors, with a line at the median.}
+\caption{Sensor-level percentage reductions in Winkler score relative to Global in Los Angeles. Positive values favor Graph Smoothing. Boxes span the interquartile range (IQR) of sensor-level reductions, with a line at the median.}
 \label{fig:sensor-improvements}
 \end{figure}
 
 When we use the target sensor's full available data, Graph Smoothing gives the same intervals as Local for all three Bay Area forecast horizons and for 15- and 30-minute Los Angeles forecasts. For 60-minute Los Angeles forecasts, their mean Winkler scores differ by about 0.1\%, with Local slightly lower. Local has higher mean Winkler scores when it uses the target sensor's latest 12, 24, or 48 slots than when it uses no data from that sensor. In the latter case, Local calculates the starting scale from the other sensors.
 
-We also examine coverage alongside Winkler score. When we use the target sensor's latest 12, 24, or 48 five-minute slots, Graph Smoothing reaches mean coverage of 89.7--89.9\% in Los Angeles and 86.7--87.5\% in Bay Area, against the 90\% target.
+We also examine empirical coverage alongside Winkler score. When we use the target sensor's latest 12, 24, or 48 five-minute slots, Graph Smoothing reaches mean empirical coverage of 89.7--89.9\% in Los Angeles and 86.7--87.5\% in Bay Area, against the 90\% target.
 
 Fig.~\ref{fig:interval-example} shows the intervals for one Los Angeles sensor. Local produces a narrow interval that misses many observed speeds, while Global produces a much wider interval. The Graph Smoothing interval is wider than Local and narrower than Global. We selected this sensor as an example, while the results above summarize all sensors.
 
@@ -289,7 +289,7 @@ Graph Smoothing also lowers mean scaled Winkler scores in the hospital-admission
 \label{fig:hospital-results}
 \end{figure}
 
-With limited target data, Graph Smoothing gives mean interval widths of 60.5--64.0 admissions, compared with 74.5 for Global. Its mean coverage is 96.7--98.7\%, above the 90\% target. The intervals are narrower than Global's while remaining conservative on average. This application demonstrates the use of the same scale-sharing method around hospital-admission forecasts.
+With limited target data, Graph Smoothing gives mean interval widths of 60.5--64.0 admissions, compared with 74.5 for Global. Its mean empirical coverage is 96.7--98.7\%, above the 90\% target. The intervals are narrower than Global's while remaining conservative on average. This application demonstrates the use of the same scale-sharing method around hospital-admission forecasts.
 
 \subsection{Discussion and Limitations}
 
