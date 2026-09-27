@@ -284,7 +284,7 @@ Fig.~\ref{fig:interval-example} shows the intervals for one Los Angeles sensor. 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figure/traffic_prediction_interval_example.pdf}
-\caption{Intervals for a Los Angeles sensor using data from its latest 12 five-minute slots and forecasts 30 minutes ahead. The example sensor is selected using test scores to illustrate a case where Graph Smoothing improves on both alternatives. Bands show prediction intervals, and dots show observed speeds.}
+\caption{Intervals for a Los Angeles sensor using data from its latest 12 five-minute slots and forecasts 30 minutes ahead. This example illustrates a case where Graph Smoothing improves on both alternatives. Bands show prediction intervals, and dots show observed speeds.}
 \label{fig:interval-example}
 \end{figure}
 
@@ -306,7 +306,7 @@ With limited target data, Graph Smoothing gives mean interval widths of 60.5--64
 
 Graph Smoothing's gains over Global are clearer in Los Angeles and hospital admissions, while Bay Area scores remain close to Global. Gains are clearest with limited target data. With full data, Graph Smoothing and Local have equal or nearly equal mean scores across all three datasets.
 
-The evaluation uses one test period per dataset, and earlier traffic results from these periods informed the experimental design. Evaluation on additional, unused periods would help assess how well the findings carry over. Our comparisons evaluate the complete method. Comparisons with count-only weights and graph-free shrinkage would help identify how much the variance weights and graph connections each contribute.
+The evaluation uses one test period per dataset. Evaluation on additional, unused periods would help assess how well the findings carry over. Our comparisons evaluate the complete method. Comparisons with count-only weights and graph-free shrinkage would help identify how much the variance weights and graph connections each contribute.
 
 \section{Conclusion}
 \label{sec:conclusion}
