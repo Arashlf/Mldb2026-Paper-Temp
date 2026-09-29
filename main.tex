@@ -278,7 +278,7 @@ Fig.~\ref{fig:sensor-improvements} shows how the score differences vary across L
 
 When we use the target sensor's full available data, Graph Smoothing gives the same intervals as Local for all three Bay Area forecast horizons and for 15- and 30-minute Los Angeles forecasts. For 60-minute Los Angeles forecasts, their mean Winkler scores differ by about 0.1\%, with Local slightly lower. Local has higher mean Winkler scores when it uses the target sensor's latest 12, 24, or 48 slots than when it uses no data from that sensor. In the latter case, Local calculates the starting scale from the other sensors.
 
-We also examine empirical coverage alongside Winkler score. When we use the target sensor's latest 12, 24, or 48 five-minute slots, Graph Smoothing reaches mean empirical coverage of 89.7--89.9\% in Los Angeles and 86.7--87.5\% in Bay Area, against the 90\% target.
+Local substantially undercovers with limited target data. For 30-minute forecasts using 24 recent slots, its mean coverage is 80.5\% in Los Angeles and 78.6\% in Bay Area, roughly 10 percentage points below the 90\% target. Graph Smoothing raises coverage to 89.8\% and 87.2\%, respectively, bringing both substantially closer to the target.
 
 Fig.~\ref{fig:interval-example} shows the intervals for one Los Angeles sensor. Local produces a narrow interval that misses many observed speeds, while Global produces a much wider interval. The Graph Smoothing interval is wider than Local and narrower than Global. We selected this sensor as an example, while the results above summarize all sensors.
 
