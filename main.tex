@@ -49,7 +49,7 @@ Estimating a prediction interval becomes difficult when a target location has li
 
 We propose a post-hoc method that uses both graph connections and the estimated reliability of location-specific scales to construct prediction intervals. Estimates with lower variance receive greater weight during graph smoothing, allowing connected locations to inform a target scale estimated from limited data. A separate split-conformal quantile rule calibrates interval widths~\cite{lei2018distributionfree}. We evaluate how Winkler scores change as the target location's available data decreases.
 
-Our main evaluation uses STGCN-based traffic forecasts~\cite{yu2018stgcn} on METR-LA and PEMS-BAY~\cite{li2018dcrnn}. In Los Angeles, using the target sensor's latest 12, 24, or 48 five-minute slots, Graph Smoothing reduces mean Winkler score~\cite{winkler1972interval} by 3.3--6.6\% compared with directly pooling data from the other sensors. In Bay Area, it lowers the score by 6.7--16.4\% compared with using separate sensor-specific scales, with scores comparable to pooling. Having access to the target sensor's full available data for interval estimation brings the mean scores of Graph Smoothing and separate sensor-specific scales close together. We also apply the method to forecasts of COVID-19 hospital admissions across U.S. states, using data from the COVIDcast repository~\cite{reinhart2021covidcast}. In this second application, graph smoothing lowers mean scaled Winkler scores relative to pooling data from the other states when the target state has limited data for interval estimation.
+Our main evaluation uses STGCN-based forecasts~\cite{yu2018stgcn} on METR-LA and PEMS-BAY~\cite{li2018dcrnn}. With 12, 24, or 48 recent target slots, Graph Smoothing reduces mean Winkler score~\cite{winkler1972interval} by 3.3--6.6\% relative to pooling in Los Angeles and by 6.7--16.4\% relative to separate sensor-specific scales in Bay Area. A second application uses COVIDcast hospital-admission data across U.S. states~\cite{reinhart2021covidcast}, where graph smoothing lowers mean scaled Winkler scores relative to pooling when target data are limited.
 
 The remainder of this paper is organized as follows. Section~\ref{sec:related-work} reviews related work, followed by the proposed method in Section~\ref{sec:method}. Section~\ref{sec:setup} describes the experimental setup for both applications, while Section~\ref{sec:evaluation} presents and discusses their results. Section~\ref{sec:conclusion} concludes the paper.
 
@@ -60,7 +60,7 @@ We review related approaches to prediction intervals for time series and graph d
 
 Time-series methods address dependence and distribution shift through sequential updates. Gibbs and Cand\`es~\cite{gibbs2021adaptive} introduce ACI, which adjusts the calibration level according to whether recent intervals contain the observations. Xu and Xie~\cite{xu2023timeseries} develop EnbPI, which combines bootstrap ensemble predictions with an updated collection of prediction errors. Their analysis bounds coverage gaps under assumptions on temporal dependence and estimation accuracy. These methods use new observations to update intervals over time.
 
-Graph-based methods use relationships between nodes when constructing prediction sets. Lunde et al.~\cite{lunde2025network} establish conformal validity for regression with network-derived features under joint exchangeability assumptions. Baghershahi et al.~\cite{baghershahi2026graphlcp} propose GraphLCP, which uses graph connections and node features to weight calibration samples through a Personalized PageRank kernel. For correlated time series, Cini et al.~\cite{cini2025relational} introduce CoRel, which learns relationships between time series and uses an STGNN to estimate prediction-error quantiles. Guo et al.~\cite{guo2026scale} propose SCALE, which combines graph-wavelet decomposition with a learned quantile model and evaluates it on traffic datasets. Limmer~\cite{limmer2026filtered} studies filtered conformal ellipsoids, using predictive covariances to construct joint prediction regions for multiple sensors.
+Graph-based methods use relationships between nodes when constructing prediction sets. Lunde et al.~\cite{lunde2025network} establish conformal validity for regression with network-derived features under joint exchangeability assumptions. Baghershahi et al.~\cite{baghershahi2026graphlcp} propose GraphLCP, which uses graph connections and node features to weight calibration samples through a Personalized PageRank kernel. For correlated time series, Cini et al.~\cite{cini2025relational} introduce CoRel, which learns relationships between time series and uses an STGNN to estimate prediction-error quantiles. Guo et al.~\cite{guo2026scale} propose SCALE, which combines graph-wavelet decomposition with a learned quantile model and evaluates it on traffic datasets.
 
 Conformal prediction has also been used to estimate uncertainty in epidemic forecasts. Wohlfender et al.~\cite{wohlfender2026hospital} apply ACI to construct prediction intervals for machine learning forecasts of COVID-19 hospital admissions. For evaluating epidemic forecasts, Bracher et al.~\cite{bracher2021evaluating} describe interval scores that account for both interval width and observations outside the intervals. These works address interval construction and evaluation in the hospital-admissions application considered here.
 
@@ -221,7 +221,7 @@ Tuning uses the first 32 dates for older scale estimates and the final 21 for sc
 
 \subsection{Evaluation Metrics}
 
-We compare the three methods at a 90\% coverage target using Winkler score, empirical coverage, and interval width. Winkler score penalizes wide intervals and observations outside them, with lower scores indicating better results~\cite{winkler1972interval,bracher2021evaluating}. Empirical coverage is the fraction of test observations inside the intervals. For traffic, both Winkler score and interval width are reported in mph. For hospital admissions, we divide each state's Winkler score by its training-period standard deviation $\tau_j$ to give states with different admission levels comparable influence, while interval width is reported in admissions. Within each application, we average each metric within each location and then equally across locations, separately for each forecast horizon and amount of available data.
+We report Winkler score, empirical coverage, and interval width. Winkler score penalizes wide intervals and missed observations, with lower scores preferred~\cite{winkler1972interval,bracher2021evaluating}. Coverage is the fraction of test observations inside the intervals. Traffic scores and widths use mph. Hospital scores are divided by each state's training-period standard deviation $\tau_j$, while widths use admissions. We average metrics within each location and then equally across locations, separately for each forecast horizon and target history.
 
 Code and instructions for reproducing the experiments are available at \url{https://github.com/Arashlf/graph-smoothed-intervals-mldb}.
 
@@ -261,7 +261,7 @@ Graph Smoothing & \textbf{21.51} & 87.17 & 6.77 \\
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figure/traffic_winkler_by_history.pdf}
-\caption{Mean Winkler score in Los Angeles. We vary the amount of data used to estimate the target sensor's interval. Other sensors retain their full available data. Full uses all data available for interval estimation. Local and Graph Smoothing have nearly identical mean scores at Full.}
+\caption{Mean Winkler score by target history in Los Angeles. Full uses all available data for interval estimation, where Local and Graph Smoothing nearly overlap.}
 \label{fig:winkler-results}
 \end{figure*}
 
@@ -285,7 +285,7 @@ Fig.~\ref{fig:interval-example} shows the intervals for one Los Angeles sensor. 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figure/traffic_prediction_interval_example.pdf}
-\caption{Intervals for a Los Angeles sensor using data from its latest 12 five-minute slots and forecasts 30 minutes ahead. This example illustrates a case where Graph Smoothing improves on both alternatives. Bands show prediction intervals, and dots show observed speeds.}
+\caption{Illustrative intervals for a Los Angeles sensor with 12 recent five-minute slots and 30-minute-ahead forecasts. Bands show prediction intervals, and dots show observed speeds.}
 \label{fig:interval-example}
 \end{figure}
 
@@ -297,7 +297,7 @@ Graph Smoothing also lowers mean scaled Winkler scores in the hospital-admission
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figure/hospital_interval_results.pdf}
-\caption{Mean scaled Winkler score for seven-day-ahead hospital-admission forecasts. Each state's score is divided by its training-period standard deviation, then scores are averaged equally across locations. Local and Graph Smoothing overlap at Full.}
+\caption{Mean scaled Winkler score for seven-day-ahead hospital-admission forecasts. Local and Graph Smoothing overlap at Full.}
 \label{fig:hospital-results}
 \end{figure}
 
