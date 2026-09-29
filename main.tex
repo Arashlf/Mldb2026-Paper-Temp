@@ -265,7 +265,7 @@ Graph Smoothing & \textbf{21.51} & 87.17 & 6.77 \\
 \label{fig:winkler-results}
 \end{figure*}
 
-In Bay Area, Graph Smoothing lowers mean Winkler score by 6.7--16.4\% relative to Local when we use data from the target sensor's latest 12, 24, or 48 five-minute slots. Its scores are close to Global, differing by less than 1.3\%. When we use no data from the target sensor to estimate its interval, Graph Smoothing gives the same intervals as Local.
+In Bay Area, Graph Smoothing lowers mean Winkler score by 6.7--16.4\% relative to Local when we use data from the target sensor's latest 12, 24, or 48 five-minute slots. Its scores are close to Global, differing by less than 1.3\%. With no target history, the no-smoothing setting is within 1\% of the lowest mean tuning score. Our selection rule therefore chooses $\lambda=0$, giving the same pooled fallback and calibration as Local and producing identical intervals.
 
 Fig.~\ref{fig:sensor-improvements} shows how the score differences vary across Los Angeles sensors. In the cases using 0, 12, 24, or 48 five-minute slots for the target sensor, Graph Smoothing gives lower scores than Global for about 75--80\% of sensors. In Bay Area, it gives lower scores for about 50--58\% of sensors in the cases using 12, 24, or 48 slots, and the median reductions remain near zero. These results show that the average score reductions are shared by more sensors in Los Angeles than in Bay Area.
 
