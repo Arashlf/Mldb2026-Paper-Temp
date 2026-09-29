@@ -160,7 +160,7 @@ The multiplier $q_i$ adjusts interval size toward coverage $1-\alpha$. Local pro
 \section{Experimental Setup}
 \label{sec:setup}
 
-We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons, with $\alpha=0.10$ in both applications.
+We evaluate whether Graph Smoothing improves prediction intervals with limited data. We vary the history available for interval estimation at one target node while all other nodes retain their full available history. We repeat this experiment with every node as the target in each dataset. We compare Global, Local, and Graph Smoothing across target histories and forecast horizons, with $\alpha=0.10$.
 
 We split data chronologically into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). We use application-specific tuning windows to accommodate the sampling frequency and forecast horizon. Each reference variance estimate uses 200 sampled windows. For each target history and forecast horizon, we average tuning Winkler scores equally across locations and select the least smoothing among 15 settings within 1\% of the lowest mean score. Interval radii remain fixed during testing.
 
@@ -305,9 +305,9 @@ With limited target data, Graph Smoothing gives mean interval widths of 60.5--64
 
 \subsection{Discussion and Limitations}
 
-Graph-based scale sharing offers a practical approach to interval estimation with limited local data. Its gains vary across datasets, and our evaluation covers one test period per dataset. The comparisons assess the complete method, leaving the separate contributions of variance weighting and graph structure to be quantified. Empirical coverage also varies around the nominal target.
+Graph-based scale sharing offers a practical approach to interval estimation with limited local data. Its gains vary across datasets, and our evaluation covers one test period per dataset. The results address scarcity at one target at a time, with full available histories at other nodes. The comparisons assess the complete method, leaving the separate contributions of variance weighting and graph structure to be quantified. Empirical coverage also varies around the nominal target.
 
-Additional temporal periods could show how score differences change over time. Paired comparisons could add uncertainty estimates for these differences while accounting for temporal dependence. Ablations with count-only weights and graph-free shrinkage could quantify the contributions of weighting and connectivity. Node-level coverage analysis could show how coverage varies across locations.
+Additional temporal periods could show how score differences change over time. Paired comparisons could add uncertainty estimates for these differences while accounting for temporal dependence. Ablations with count-only weights and graph-free shrinkage could quantify the contributions of weighting and connectivity. Node-level coverage analysis could show how coverage varies across locations. Another extension is to consider several nodes with limited histories, as might occur after a shared interruption in data collection. This would examine interval estimation when the target's neighbors also have less data available for sharing.
 
 Future work can explore privacy-preserving scale sharing, online calibration under distribution shift, learned or time-varying graphs, and joint prediction intervals across multiple locations. These directions could extend uncertainty estimation to networks with changing relationships and restricted data access.
 
