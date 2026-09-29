@@ -138,7 +138,7 @@ The degrees-of-freedom ratio is the normalized trace of the linear smoother,
 \qquad \lambda>0.
 \label{eq:smoothing-ratio}
 \end{equation}
-Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1$. Smaller ratios give stronger sharing. Tuning selects one ratio, and each target case's weights determine $\lambda$. A special grid entry labeled zero uses a large finite $\lambda$ to approximate the component-wise shared-scale limit.
+Matrices are restricted to components intersecting $\mathcal O$, with $\rho(0)=1$. Smaller ratios give stronger sharing. Tuning selects one ratio, and each target case's weights determine $\lambda$. The strongest-smoothing grid setting uses a large finite $\lambda$ to approximate a common scale within each connected component.
 
 \subsection{Calibration and Comparisons}
 
