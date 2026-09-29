@@ -162,7 +162,7 @@ The multiplier $q_i$ adjusts interval size toward coverage $1-\alpha$. Local pro
 
 We evaluate whether Graph Smoothing improves prediction intervals with limited data. We compare Global, Local, and Graph Smoothing across different amounts of available data and forecast horizons, with $\alpha=0.10$ in both applications.
 
-We split data chronologically into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). Each reference variance estimate uses 200 sampled windows. For each target history and forecast horizon, we average tuning Winkler scores equally across locations and select the least smoothing among 15 settings within 1\% of the lowest mean score. Interval radii remain fixed during testing.
+We split data chronologically into training (60\%), validation (10\%), tuning (10\%), calibration (10\%), and testing (10\%). We use application-specific tuning windows to accommodate the sampling frequency and forecast horizon. Each reference variance estimate uses 200 sampled windows. For each target history and forecast horizon, we average tuning Winkler scores equally across locations and select the least smoothing among 15 settings within 1\% of the lowest mean score. Interval radii remain fixed during testing.
 
 \subsection{Traffic Forecasting}
 
