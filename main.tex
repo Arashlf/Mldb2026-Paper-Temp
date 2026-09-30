@@ -69,7 +69,7 @@ Our contribution is a variance-weighted graph smoother for interval estimation w
 \section{Graph-Smoothed Prediction Intervals}
 \label{sec:method}
 
-Let $V=\{1,\ldots,p\}$ be the nodes of a graph, with observations $y_{jt}$ and forecasts $\hat y_{jt}$ at node $j\in V$ and time $t$. For target node $i\in V$, radius $r_i$ defines
+Let $V=\{1,\ldots,p\}$ be the nodes of a graph, with observations $y_{jt}\in\mathbb R$ and forecasts $\hat y_{jt}\in\mathbb R$ at node $j\in V$ and time $t$. For target node $i\in V$, radius $r_i$ defines
 
 \begin{equation}
 I_{it}=[\hat y_{it}-r_i,\;\hat y_{it}+r_i].
@@ -80,7 +80,7 @@ For a chosen miscoverage level $\alpha\in(0,1)$, we target coverage $1-\alpha$ s
 
 \subsection{Starting Scales}
 
-For usable estimation times $\mathcal E_j$ at node $j$ and count $n_j=|\mathcal E_j|$, define scaled absolute forecast errors
+For usable estimation times $\mathcal E_j$ at node $j$ and count $n_j=|\mathcal E_j|\in\mathbb Z_{\ge0}$, define scaled absolute forecast errors
 \begin{equation}
 d_{jt}=\frac{|y_{jt}-\hat y_{jt}|}{\tau_j},\qquad \tau_j>0.
 \end{equation}
@@ -113,10 +113,10 @@ Here $\operatorname{Var}_{b}$ is the sample variance across usable windows. For 
 
 \subsection{Graph Smoothing}
 
-Let $A=(a_{jk})$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. For $\lambda\geq0$, weighted graph Tikhonov regularization~\cite{shuman2013emerging} gives
+Let $A=(a_{jk})\in\mathbb R_{\ge0}^{p\times p}$ be the symmetric weighted adjacency matrix, $E=\{\{j,k\}:j<k,\ a_{jk}>0\}$, and $\mathcal O=\{j\in V:w_j>0\}$. Let $\mathbf z=(z_1,\ldots,z_p)^\top\in\mathbb R^p$ denote the vector of log-scales. For $\lambda\geq0$, weighted graph Tikhonov regularization~\cite{shuman2013emerging} gives
 \begin{equation}
 \begin{aligned}
-\hat{\mathbf z}\in\arg\min_{\mathbf z}\biggl\{&
+\hat{\mathbf z}\in\arg\min_{\mathbf z\in\mathbb R^p}\biggl\{&
 \sum_{j\in\mathcal O}w_j(z_j-\log s_j)^2\\
 &+\lambda\sum_{\{j,k\}\in E}a_{jk}(z_j-z_k)^2\biggr\}.
 \end{aligned}
